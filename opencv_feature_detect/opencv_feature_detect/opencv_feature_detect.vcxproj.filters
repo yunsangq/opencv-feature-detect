@@ -15,10 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="detector.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="opt.cpp">
+    <ClCompile Include="detect.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

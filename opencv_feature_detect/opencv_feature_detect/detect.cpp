@@ -79,9 +79,10 @@ void harris(Mat& img1, time_t start, long double frame) {
 	time_t end;
 	Mat response;
 	int cnt = 0;
-	int harris_thresh = 200;
+	int harris_thresh = 130, thresh_max = 5000;
 	response = harriscorner(gray);
 	for (int j = 0; j < response.rows; j++) {
+		if (cnt > thresh_max) break;
 		float* res = response.ptr<float>(j);
 		for (int i = 0; i < response.cols; i++) {
 			if ((int)res[i] > harris_thresh) {
@@ -107,28 +108,24 @@ int main() {
 	time_t start;
 	long double frame = 0.0;
 	time(&start);
-	while (1) {
+	while (waitKey(20) != 27) {
 		vc >> input;
 		if (input.empty()) break;
 		frame++;
 		int col = input.cols;
 		int row = input.rows;
-		Mat img1(row, col, CV_8UC3);
-		Mat img2(row, col, CV_8UC3);
-		img1 = input.clone();
-		img2 = input.clone();
+		Mat img1 = input.clone();
+		Mat img2 = input.clone();
 
-		thread t2(&fast, img2, start, frame);
 		thread t1(&harris, img1, start, frame);
-		
+		thread t2(&fast, img2, start, frame);
+
 		t1.join();
 		t2.join();
 
-		if (waitKey(33) == 27) break;
-		
 		Mat disp;
 		cv::hconcat(img1, img2, disp);
-		cv::imshow("detection", disp);		
+		cv::imshow("detection", disp);
 	}
 	cv::destroyAllWindows();
 	return 0;
