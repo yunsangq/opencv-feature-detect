@@ -60,7 +60,7 @@ void fast(Mat& img2, time_t start, long double frame) {
 	time_t end;
 	vector<KeyPoint> points;
 	int fast_thresh = 50;
-	FAST(gray, points, fast_thresh);
+	FAST(gray, points, fast_thresh, true);
 	for (int i = 0; i < points.size(); i++) {
 		circle(img2, Point(points[i].pt.x, points[i].pt.y), 3, Scalar(0, 0, 255), 2, 8, 0);
 	}
@@ -79,7 +79,7 @@ void harris(Mat& img1, time_t start, long double frame) {
 	time_t end;
 	Mat response;
 	int cnt = 0;
-	int harris_thresh = 130, thresh_max = 5000;
+	int harris_thresh = 130, thresh_max = 3000;
 	response = harriscorner(gray);
 	for (int j = 0; j < response.rows; j++) {
 		if (cnt > thresh_max) break;
@@ -100,20 +100,17 @@ void harris(Mat& img1, time_t start, long double frame) {
 	putText(img1, "HARRIS FPS:" + h_fps + "  Threshold:" + h_thresh + "  Points:" + h_points, Point2f(0, 15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 1);
 }
 
-
 int main() {
-	Mat input;
 	VideoCapture vc(0);
 	if (!vc.isOpened()) return 0;
 	time_t start;
 	long double frame = 0.0;
 	time(&start);
 	while (waitKey(20) != 27) {
+		Mat input;
 		vc >> input;
 		if (input.empty()) break;
 		frame++;
-		int col = input.cols;
-		int row = input.rows;
 		Mat img1 = input.clone();
 		Mat img2 = input.clone();
 
