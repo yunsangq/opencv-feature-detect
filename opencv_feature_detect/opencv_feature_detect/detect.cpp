@@ -49,7 +49,7 @@ Mat harriscorner(Mat gray) {
 			dst_data[j] = (float)(a*c - b*b - k*(a + c)*(a + c));			
 		}
 	}
-	normalize(dst, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat());
+	normalize(dst, dst_norm, 0, 1, NORM_MINMAX, CV_32FC1, Mat());
 
 	return dst_norm;
 }
@@ -79,13 +79,14 @@ void harris(Mat& img1, time_t start, long double frame) {
 	time_t end;
 	Mat response;
 	int cnt = 0;
-	int harris_thresh = 130, thresh_max = 3000;
+	int thresh_max = 3000;
+	double harris_thresh = 0.55;
 	response = harriscorner(gray);
 	for (int j = 0; j < response.rows; j++) {
 		if (cnt > thresh_max) break;
 		float* res = response.ptr<float>(j);
 		for (int i = 0; i < response.cols; i++) {
-			if ((int)res[i] > harris_thresh) {
+			if (res[i] > harris_thresh) {
 				circle(img1, Point(i, j), 3, Scalar(0, 0, 255), 2, 8, 0);
 				cnt++;
 			}
@@ -96,7 +97,7 @@ void harris(Mat& img1, time_t start, long double frame) {
 	double harris_fps = frame / harris_seconds;
 	string h_fps = format("%.2f", harris_fps);
 	string h_points = format("%d", cnt);
-	string h_thresh = format("%d", harris_thresh);
+	string h_thresh = format("%.2f", harris_thresh);
 	putText(img1, "HARRIS FPS:" + h_fps + "  Threshold:" + h_thresh + "  Points:" + h_points, Point2f(0, 15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 1);
 }
 

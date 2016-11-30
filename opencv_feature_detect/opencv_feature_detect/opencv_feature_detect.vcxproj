@@ -149,6 +149,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="detect.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="image_detect.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
   </ItemGroup>
