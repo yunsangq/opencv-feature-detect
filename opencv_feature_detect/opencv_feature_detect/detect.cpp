@@ -54,77 +54,125 @@ Mat harriscorner(Mat gray) {
 	return dst_norm;
 }
 
-void fast(Mat& img2, time_t start, long double frame) {
-	Mat gray;
-	cvtColor(img2, gray, COLOR_BGR2GRAY);
-	time_t end;
-	vector<KeyPoint> points;
-	int fast_thresh = 50;
-	FAST(gray, points, fast_thresh, true);
-	for (int i = 0; i < points.size(); i++) {
-		circle(img2, Point(points[i].pt.x, points[i].pt.y), 3, Scalar(0, 0, 255), 2, 8, 0);
+void fast(VideoCapture vc, time_t start) {
+	long double frame = 0.0;
+	while (waitKey(20) != 27) {
+		Mat img2;
+		vc >> img2;
+		frame++;
+		Mat gray;
+		cvtColor(img2, gray, COLOR_BGR2GRAY);
+		time_t end;
+		vector<KeyPoint> points;
+		int fast_thresh = 50;
+		FAST(gray, points, fast_thresh, true);
+		for (int i = 0; i < points.size(); i++) {
+			circle(img2, Point(points[i].pt.x, points[i].pt.y), 3, Scalar(0, 0, 255), 2, 8, 0);
+		}
+		time(&end);
+		double fast_seconds = difftime(end, start);
+		double fast_fps = frame / fast_seconds;
+		string s_fps = format("%.2f", fast_fps);
+		string s_points = format("%d", points.size());
+		string s_thresh = format("%d", fast_thresh);
+		putText(img2, "FAST FPS:" + s_fps + "  Threshold:" + s_thresh + "  Points:" + s_points, Point2f(0, 15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 1);
+		imshow("FAST", img2);
 	}
-	time(&end);
-	double fast_seconds = difftime(end, start);
-	double fast_fps = frame / fast_seconds;
-	string s_fps = format("%.2f", fast_fps);
-	string s_points = format("%d", points.size());
-	string s_thresh = format("%d", fast_thresh);
-	putText(img2, "FAST FPS:" + s_fps + "  Threshold:" + s_thresh + "  Points:" + s_points, Point2f(0, 15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 1);
 }
 
-void harris(Mat& img1, time_t start, long double frame) {
-	Mat gray;
-	cvtColor(img1, gray, COLOR_BGR2GRAY);
-	time_t end;
-	Mat response;
-	int cnt = 0;
-	int thresh_max = 3000;
-	double harris_thresh = 0.55;
-	response = harriscorner(gray);
-	for (int j = 0; j < response.rows; j++) {
-		if (cnt > thresh_max) break;
-		float* res = response.ptr<float>(j);
-		for (int i = 0; i < response.cols; i++) {
-			if (res[i] > harris_thresh) {
-				circle(img1, Point(i, j), 3, Scalar(0, 0, 255), 2, 8, 0);
-				cnt++;
+void cornerHarris_demo(VideoCapture vc, time_t start) {
+	long double frame = 0.0;
+	while (waitKey(20) != 27) {
+		Mat src;
+		vc >> src;
+		frame++;
+		Mat gray;
+		time_t end;
+		cvtColor(src, gray, COLOR_BGR2GRAY);
+		Mat dst, dst_norm, dst_norm_scaled;
+		dst = Mat::zeros(src.size(), CV_32FC1);
+
+		/// Detector parameters
+		int blockSize = 2;
+		int apertureSize = 3;
+		double k = 0.04;
+
+		/// Detecting corners
+		cornerHarris(gray, dst, blockSize, apertureSize, k, BORDER_DEFAULT);
+
+		/// Normalizing
+		normalize(dst, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat());
+		convertScaleAbs(dst_norm, dst_norm_scaled);
+
+		/// Drawing a circle around corners
+		int cnt = 0;
+		for (int j = 0; j < dst_norm.rows; j++)
+		{
+			for (int i = 0; i < dst_norm.cols; i++)
+			{
+				if ((int)dst_norm.at<float>(j, i) > 200)
+				{
+					circle(dst_norm_scaled, Point(i, j), 5, Scalar(0), 2, 8, 0);
+					cnt++;
+				}
 			}
 		}
+		time(&end);
+		double harris_seconds = difftime(end, start);
+		double harris_fps = frame / harris_seconds;
+		string h_fps = format("%.2f", harris_fps);
+		string h_points = format("%d", cnt);
+		putText(dst_norm_scaled, "HARRIS FPS:" + h_fps + "  Threshold:200  Points:" + h_points, Point2f(0, 15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(1), 1);
+		imshow("CV Harris", dst_norm_scaled);
 	}
-	time(&end);
-	double harris_seconds = difftime(end, start);
-	double harris_fps = frame / harris_seconds;
-	string h_fps = format("%.2f", harris_fps);
-	string h_points = format("%d", cnt);
-	string h_thresh = format("%.2f", harris_thresh);
-	putText(img1, "HARRIS FPS:" + h_fps + "  Threshold:" + h_thresh + "  Points:" + h_points, Point2f(0, 15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 1);
+}
+
+void harris(VideoCapture vc, time_t start) {
+	long double frame = 0.0;
+	while (waitKey(20) != 27) {
+		Mat img1;
+		vc >> img1;
+		frame++;
+		Mat gray;
+		cvtColor(img1, gray, COLOR_BGR2GRAY);
+		time_t end;
+		Mat response;
+		int cnt = 0;
+		int thresh_max = 3000;
+		double harris_thresh = 0.55;
+		response = harriscorner(gray);
+		for (int j = 0; j < response.rows; j++) {
+			if (cnt > thresh_max) break;
+			float* res = response.ptr<float>(j);
+			for (int i = 0; i < response.cols; i++) {
+				if (res[i] > harris_thresh) {
+					circle(img1, Point(i, j), 3, Scalar(0, 0, 255), 2, 8, 0);
+					cnt++;
+				}
+			}
+		}
+		time(&end);
+		double harris_seconds = difftime(end, start);
+		double harris_fps = frame / harris_seconds;
+		string h_fps = format("%.2f", harris_fps);
+		string h_points = format("%d", cnt);
+		string h_thresh = format("%.2f", harris_thresh);
+		putText(img1, "HARRIS FPS:" + h_fps + "  Threshold:" + h_thresh + "  Points:" + h_points, Point2f(0, 15), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 1);
+		imshow("harris", img1);
+	}
 }
 
 int main() {
 	VideoCapture vc(0);
 	if (!vc.isOpened()) return 0;
 	time_t start;
-	long double frame = 0.0;
 	time(&start);
-	while (waitKey(20) != 27) {
-		Mat input;
-		vc >> input;
-		if (input.empty()) break;
-		frame++;
-		Mat img1 = input.clone();
-		Mat img2 = input.clone();
+	thread t1(&harris, vc, start);
+	thread t2(&fast, vc, start);
+	thread t3(&cornerHarris_demo, vc, start);
 
-		thread t1(&harris, img1, start, frame);
-		thread t2(&fast, img2, start, frame);
-
-		t1.join();
-		t2.join();
-
-		Mat disp;
-		cv::hconcat(img1, img2, disp);
-		cv::imshow("detection", disp);
-	}
-	cv::destroyAllWindows();
+	t1.join();
+	t2.join();
+	t3.join();
 	return 0;
 }
